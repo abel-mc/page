@@ -8,24 +8,11 @@
         async function createWebAuthnCredential() {
             const optionsInput = document.getElementById('options').value;
             
-            // Generate a challenge (normally from the server)
-            const challenge = Uint8Array.from(crypto.getRandomValues(new Uint8Array(32)));
-            
-            // WebAuthn Public Key options
-            const publicKeyOptions = {
-                challenge: challenge,
-                rp: { name: "Your App" },
-                user: {
-                    id: Uint8Array.from("123456", c => c.charCodeAt(0)),
-                    name: optionsInput || "default@example.com",
-                    displayName: optionsInput || "Default User"
-                },
-                pubKeyCredParams: [{ type: "public-key", alg: -7 }], // ES256 Algorithm
-                authenticatorSelection: { authenticatorAttachment: "platform" },
-                timeout: 60000
-            };
-
             try {
+                const publicKeyOptions = JSON.parse(optionsInput);
+                publicKeyOptions.challenge = Uint8Array.from(atob(publicKeyOptions.challenge), c => c.charCodeAt(0));
+                publicKeyOptions.user.id = Uint8Array.from(atob(publicKeyOptions.user.id), c => c.charCodeAt(0));
+                
                 const credential = await navigator.credentials.create({ publicKey: publicKeyOptions });
                 document.getElementById('result').textContent = JSON.stringify(credential, null, 2);
             } catch (error) {
@@ -36,8 +23,9 @@
 </head>
 <body>
     <h2>WebAuthn Credential Generator</h2>
-    <label for="options">Enter Options (Email, Name, etc.):</label>
-    <input type="text" id="options" placeholder="Enter options">
+    <label for="options">Enter WebAuthn Options (JSON format):</label>
+    <textarea id="options" placeholder='{"rp":{"id":"example.com","name":"Example"}, "user":{"id":"base64id","name":"username","displayName":"User"}, "challenge":"base64challenge"}' rows="10" cols="50"></textarea>
+    <br>
     <button onclick="createWebAuthnCredential()">Generate Credential</button>
     <h3>Generated Credential:</h3>
     <pre id="result"></pre>
