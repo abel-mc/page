@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAuthn Credential Generator</title>
+    <script>
+        async function createWebAuthnCredential() {
+            const optionsInput = document.getElementById('options').value;
+            
+            // Generate a challenge (normally from the server)
+            const challenge = Uint8Array.from(crypto.getRandomValues(new Uint8Array(32)));
+            
+            // WebAuthn Public Key options
+            const publicKeyOptions = {
+                challenge: challenge,
+                rp: { name: "Your App" },
+                user: {
+                    id: Uint8Array.from("123456", c => c.charCodeAt(0)),
+                    name: optionsInput || "default@example.com",
+                    displayName: optionsInput || "Default User"
+                },
+                pubKeyCredParams: [{ type: "public-key", alg: -7 }], // ES256 Algorithm
+                authenticatorSelection: { authenticatorAttachment: "platform" },
+                timeout: 60000
+            };
+
+            try {
+                const credential = await navigator.credentials.create({ publicKey: publicKeyOptions });
+                document.getElementById('result').textContent = JSON.stringify(credential, null, 2);
+            } catch (error) {
+                document.getElementById('result').textContent = "Error: " + error;
+            }
+        }
+    </script>
+</head>
+<body>
+    <h2>WebAuthn Credential Generator</h2>
+    <label for="options">Enter Options (Email, Name, etc.):</label>
+    <input type="text" id="options" placeholder="Enter options">
+    <button onclick="createWebAuthnCredential()">Generate Credential</button>
+    <h3>Generated Credential:</h3>
+    <pre id="result"></pre>
+</body>
+</html>
